@@ -6,18 +6,33 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
+// ============ CRITICAL FOR RENDER ============
+// Trust Render's proxy for secure cookies
+app.set('trust proxy', 1);
+
+// ============ MIDDLEWARE ============
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Session configuration optimized for Render
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'bangalore-connect-secret',
+    secret: process.env.SESSION_SECRET || 'bangalore-connect-secret-key-123456789',
     resave: false,
     saveUninitialized: false,
-    cookie: { 
+    proxy: true, // Trust Render's reverse proxy
+    cookie: {
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 24 * 60 * 60 * 1000
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        sameSite: 'lax'
     }
 }));
+
+// Debug middleware (can remove after testing)
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    next();
+});
 
 // Set EJS as templating engine
 app.set('view engine', 'ejs');
@@ -26,7 +41,7 @@ app.set('views', path.join(__dirname, 'views'));
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// JSON Database Helper Functions
+// ============ HELPER FUNCTIONS ============
 const jobsFilePath = path.join(__dirname, 'data', 'jobs.json');
 
 async function readJobs() {
@@ -49,7 +64,6 @@ async function writeJobs(jobs) {
     }
 }
 
-// Helper function to format date
 function formatDate(dateString) {
     const date = new Date(dateString);
     const now = new Date();
@@ -65,8 +79,18 @@ function formatDate(dateString) {
     });
 }
 
+function generateCaptcha() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let captcha = '';
+    for (let i = 0; i < 6; i++) {
+        captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return captcha;
+}
+
 // ============ MIDDLEWARES ============
 const isAdmin = (req, res, next) => {
+    console.log('Admin check:', req.session.adminLoggedIn);
     if (req.session.adminLoggedIn) {
         next();
     } else {
@@ -149,6 +173,7 @@ app.get('/whatsapp', (req, res) => {
 // Admin Login Page
 app.get('/admin/login', (req, res) => {
     if (req.session.adminLoggedIn) {
+        console.log('Already logged in, redirecting to dashboard');
         return res.redirect('/admin/dashboard');
     }
     
@@ -161,11 +186,14 @@ app.get('/admin/login', (req, res) => {
 
 // Admin Login POST
 app.post('/admin/login', (req, res) => {
+    console.log('Login attempt:', req.body.username);
+    
     const { username, password, captcha } = req.body;
     const storedCaptcha = req.body.captchaHidden;
     
     // CAPTCHA validation
     if (captcha !== storedCaptcha) {
+        console.log('CAPTCHA failed');
         return res.render('admin', {
             title: 'Admin Login',
             error: 'Invalid CAPTCHA. Please try again.',
@@ -173,15 +201,28 @@ app.post('/admin/login', (req, res) => {
         });
     }
     
-    // Admin credentials
+    // Admin credentials - CHANGE THESE IN PRODUCTION!
     const adminUsername = process.env.ADMIN_USERNAME || 'Ruhan@0312';
     const adminPassword = process.env.ADMIN_PASSWORD || 'Ruhan@0312';
     
     if (username === adminUsername && password === adminPassword) {
+        console.log('Login successful for:', username);
         req.session.adminLoggedIn = true;
         req.session.adminUsername = username;
-        res.redirect('/admin/dashboard');
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.render('admin', {
+                    title: 'Admin Login',
+                    error: 'Login failed. Please try again.',
+                    captcha: generateCaptcha()
+                });
+            }
+            console.log('Session saved, redirecting to dashboard');
+            res.redirect('/admin/dashboard');
+        });
     } else {
+        console.log('Invalid credentials');
         res.render('admin', {
             title: 'Admin Login',
             error: 'Invalid username or password',
@@ -337,6 +378,7 @@ app.post('/admin/delete-job/:id', isAdmin, async (req, res) => {
 
 // Admin Logout
 app.get('/admin/logout', (req, res) => {
+    console.log('Logging out admin:', req.session.adminUsername);
     req.session.destroy((err) => {
         if (err) {
             console.error('Error destroying session:', err);
@@ -345,22 +387,10 @@ app.get('/admin/logout', (req, res) => {
     });
 });
 
-// ----- HELPER FUNCTIONS -----
-
-function generateCaptcha() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let captcha = '';
-    for (let i = 0; i < 6; i++) {
-        captcha += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return captcha;
-}
-
-// ----- START SERVER -----
+// ============ SERVER INITIALIZATION ============
 const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
+const HOST = '0.0.0.0';
 
-// Create data directory if it doesn't exist
 async function initializeDataDirectory() {
     try {
         const dataDir = path.join(__dirname, 'data');
@@ -369,6 +399,7 @@ async function initializeDataDirectory() {
         const jobsFile = path.join(dataDir, 'jobs.json');
         try {
             await fs.access(jobsFile);
+            console.log('✅ jobs.json exists');
         } catch {
             await fs.writeFile(jobsFile, '[]', 'utf8');
             console.log('✅ Created jobs.json file');
@@ -383,17 +414,19 @@ async function initializeDataDirectory() {
 app.listen(PORT, HOST, async () => {
     await initializeDataDirectory();
     
+    console.log('='.repeat(50));
     console.log(`🚀 Server running on http://${HOST}:${PORT}`);
     console.log(`🔐 Admin login: http://${HOST}:${PORT}/admin/login`);
     console.log(`👤 Username: ${process.env.ADMIN_USERNAME || 'Ruhan@0312'}`);
     console.log(`🔑 Password: ${process.env.ADMIN_PASSWORD || 'Ruhan@0312'}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log('='.repeat(50));
     
     if (process.env.NODE_ENV === 'production') {
-        console.log('⚠️  IMPORTANT: For production, ensure you have set:');
-        console.log('   - SESSION_SECRET environment variable');
-        console.log('   - ADMIN_USERNAME and ADMIN_PASSWORD');
-        console.log('   - HTTPS enabled for secure cookies');
+        console.log('⚠️  PRODUCTION SETTINGS:');
+        console.log('   - Secure cookies: ENABLED');
+        console.log('   - Trust proxy: ENABLED');
+        console.log('   - Make sure to set SESSION_SECRET in Render environment variables');
     }
 });
 

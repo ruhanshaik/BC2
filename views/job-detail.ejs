@@ -1,0 +1,228 @@
+<%- include('partials/header') %>
+
+    <!-- Job Detail Section -->
+    <section class="job-detail">
+        <div class="container">
+            <a href="/" class="back-link">
+                <i class="fas fa-arrow-left"></i> Back to Jobs
+            </a>
+            
+            <div class="job-detail-card">
+                <div class="job-detail-header">
+                    <div>
+                        <h1 class="job-detail-title"><%= job.title %></h1>
+                        <p class="job-detail-company">
+                            <i class="fas fa-building"></i>
+                            <%= job.company %>
+                        </p>
+                    </div>
+                    
+                    <div class="job-detail-actions">
+                        <button class="btn btn-share-lg" onclick="shareJob(<%= job.id %>)">
+                            <i class="fas fa-share-alt"></i> Share
+                        </button>
+                        <% if (job.applyLink) { %>
+                            <a href="<%= job.applyLink %>" class="btn btn-apply-lg" 
+                               <%= job.applyLink.startsWith('http') ? 'target="_blank"' : '' %>>
+                                <i class="fas fa-paper-plane"></i> Apply Now
+                            </a>
+                        <% } else { %>
+                            <a href="#apply" class="btn btn-apply-lg">
+                                <i class="fas fa-paper-plane"></i> Apply Now
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <div class="job-detail-meta">
+                    <div class="meta-box">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <h4>Location</h4>
+                        <p><%= job.location %></p>
+                    </div>
+                    
+                    <div class="meta-box">
+                        <i class="fas fa-briefcase"></i>
+                        <h4>Job Type</h4>
+                        <p><%= job.type %></p>
+                    </div>
+                    
+                    <div class="meta-box">
+                        <i class="fas fa-chart-line"></i>
+                        <h4>Experience</h4>
+                        <p><%= job.experience %></p>
+                    </div>
+                    
+                    <div class="meta-box">
+                        <i class="fas fa-rupee-sign"></i>
+                        <h4>Salary</h4>
+                        <p><%= job.salary %></p>
+                    </div>
+                    
+                    <div class="meta-box">
+                        <i class="fas fa-calendar"></i>
+                        <h4>Posted Date</h4>
+                        <p>
+                            <% 
+                                const date = new Date(job.postedDate);
+                                const now = new Date();
+                                const diffTime = Math.abs(now - date);
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                
+                                let formattedDate;
+                                if (diffDays === 1) formattedDate = 'Today';
+                                else if (diffDays <= 7) formattedDate = `${diffDays} days ago`;
+                                else formattedDate = date.toLocaleDateString('en-IN', { 
+                                    day: 'numeric', 
+                                    month: 'short', 
+                                    year: 'numeric' 
+                                });
+                            %>
+                            <%= formattedDate %>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="job-detail-description">
+                    <!-- Check if fullDescription contains markdown format -->
+                    <% if (job.fullDescription && job.fullDescription.includes('##')) { 
+                        // Parse markdown-like sections
+                        const sections = job.fullDescription.split('##').filter(section => section.trim());
+                        
+                        sections.forEach(section => {
+                            const lines = section.split('\n').filter(line => line.trim());
+                            if (lines.length > 0) {
+                                const title = lines[0].trim();
+                                const content = lines.slice(1).join('\n').trim();
+                    %>
+                                <h3><%= title %></h3>
+                                
+                                <% if (content.includes('- ')) { 
+                                    // Handle bullet points
+                                    const items = content.split('\n').filter(item => item.trim());
+                                %>
+                                    <ul>
+                                        <% items.forEach(item => { 
+                                            const cleanItem = item.replace(/^-\s*/, '').trim();
+                                            if (cleanItem) { %>
+                                                <li><%= cleanItem %></li>
+                                            <% }
+                                        }); %>
+                                    </ul>
+                                <% } else { %>
+                                    <p><%= content.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') %></p>
+                                <% } %>
+                    <%      }
+                        });
+                    } else if (job.fullDescription) { 
+                        // Display simple full description
+                    %>
+                        <h3>Job Description</h3>
+                        <p><%= job.fullDescription.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') %></p>
+                        
+                        <h3>Responsibilities</h3>
+                        <ul>
+                            <li>Design, develop, and maintain software applications</li>
+                            <li>Collaborate with cross-functional teams to define, design, and ship new features</li>
+                            <li>Write clean, maintainable, and efficient code</li>
+                            <li>Identify and correct bottlenecks and fix bugs</li>
+                            <li>Help maintain code quality, organization, and automation</li>
+                        </ul>
+                        
+                        <h3>Requirements</h3>
+                        <ul>
+                            <li>Bachelor's degree in Computer Science or related field</li>
+                            <li><%= job.experience %> of relevant experience</li>
+                            <li>Strong problem-solving skills</li>
+                            <li>Excellent communication skills</li>
+                            <li>Ability to work in a fast-paced environment</li>
+                        </ul>
+                        
+                        <h3>Benefits</h3>
+                        <ul>
+                            <li>Health insurance</li>
+                            <li>Flexible work hours</li>
+                            <li>Remote work options</li>
+                            <li>Learning and development opportunities</li>
+                            <li>Competitive salary package</li>
+                        </ul>
+                    <% } else if (job.description) { 
+                        // Fallback to old description field
+                    %>
+                        <h3>Job Description</h3>
+                        <p><%= job.description.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') %></p>
+                    <% } else { %>
+                        <h3>Job Description</h3>
+                        <p>No detailed description available for this job.</p>
+                    <% } %>
+                </div>
+                
+                <div class="job-detail-actions" id="apply">
+                    <button class="btn btn-share-lg" onclick="shareJob(<%= job.id %>)">
+                        <i class="fas fa-share-alt"></i> Share Job
+                    </button>
+                    
+                    <% if (job.applyLink) { %>
+                        <a href="<%= job.applyLink %>" class="btn btn-apply-lg" 
+                           <%= job.applyLink.startsWith('http') ? 'target="_blank"' : '' %>>
+                            <i class="fas fa-paper-plane"></i> 
+                            <%= job.applyLink.startsWith('mailto') ? 'Apply via Email' : 'Apply Now' %>
+                        </a>
+                    <% } else { 
+                        // Create email link from company name
+                        const cleanCompany = job.company.toLowerCase().replace(/\s+/g, '');
+                    %>
+                        <a href="mailto:careers@<%= cleanCompany %>.com?subject=Application for <%= encodeURIComponent(job.title) %> Position&body=Dear Hiring Manager,%0D%0A%0D%0AI am writing to apply for the <%= encodeURIComponent(job.title) %> position at <%= encodeURIComponent(job.company) %>.%0D%0A%0D%0APlease find my resume attached.%0D%0A%0D%0ABest regards,%0D%0A[Your Name]" 
+                           class="btn btn-apply-lg">
+                            <i class="fas fa-paper-plane"></i> Apply via Email
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        function shareJob(jobId) {
+            const jobUrl = `${window.location.origin}/job/${jobId}`;
+            const jobTitle = document.querySelector('.job-detail-title').textContent;
+            const company = document.querySelector('.job-detail-company').textContent;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: `${jobTitle} - ${company}`,
+                    text: `Check out this job opportunity on Bangalore Connect: ${jobTitle} at ${company}`,
+                    url: jobUrl,
+                })
+                .then(() => {
+                    // Show success message
+                    alert('Job shared successfully!');
+                })
+                .catch((error) => {
+                    console.log('Error sharing:', error);
+                    copyToClipboard(jobUrl);
+                });
+            } else {
+                copyToClipboard(jobUrl);
+            }
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    alert('Link copied to clipboard!');
+                })
+                .catch(() => {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('Link copied to clipboard!');
+                });
+        }
+    </script>
+
+<%- include('partials/footer') %>

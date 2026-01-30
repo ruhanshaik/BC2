@@ -1,0 +1,195 @@
+<%- include('partials/header') %>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">Find Your <span class="hero-highlight">Dream Job</span> in Bangalore</h1>
+                <p class="hero-subtitle">Connecting talented professionals with top companies in India's tech hub</p>
+                
+                <!-- Search and Filter -->
+                <div class="search-container">
+                    <form action="/search" method="GET" class="search-form">
+                        <div class="search-bar">
+                            <i class="fas fa-search search-icon"></i>
+                            <input 
+                                type="text" 
+                                name="q" 
+                                placeholder="Search jobs by title, company, or keyword..."
+                                value="<%= query %>"
+                                class="search-input"
+                            >
+                            <button type="submit" class="search-btn">Search</button>
+                        </div>
+                        
+                        <div class="filter-container">
+                            <div class="filter-group">
+                                <select name="location" class="filter-select">
+                                    <option value="">All Locations</option>
+                                    <option value="Bangalore" <%= filters.location === 'Bangalore' ? 'selected' : '' %>>Bangalore</option>
+                                    <option value="Remote" <%= filters.location === 'Remote' ? 'selected' : '' %>>Remote</option>
+                                    <option value="Hybrid" <%= filters.location === 'Hybrid' ? 'selected' : '' %>>Hybrid</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <select name="experience" class="filter-select">
+                                    <option value="">All Experience Levels</option>
+                                    <option value="Fresher" <%= filters.experience === 'Fresher' ? 'selected' : '' %>>Fresher</option>
+                                    <option value="1-2 years" <%= filters.experience === '1-2 years' ? 'selected' : '' %>>1-2 years</option>
+                                    <option value="2-4 years" <%= filters.experience === '2-4 years' ? 'selected' : '' %>>2-4 years</option>
+                                    <option value="3-5 years" <%= filters.experience === '3-5 years' ? 'selected' : '' %>>3-5 years</option>
+                                    <option value="5+ years" <%= filters.experience === '5+ years' ? 'selected' : '' %>>5+ years</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <select name="type" class="filter-select">
+                                    <option value="">All Job Types</option>
+                                    <option value="Full-time" <%= filters.type === 'Full-time' ? 'selected' : '' %>>Full-time</option>
+                                    <option value="Part-time" <%= filters.type === 'Part-time' ? 'selected' : '' %>>Part-time</option>
+                                    <option value="Remote" <%= filters.type === 'Remote' ? 'selected' : '' %>>Remote</option>
+                                    <option value="Internship" <%= filters.type === 'Internship' ? 'selected' : '' %>>Internship</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="hero-stats">
+                    <div class="stat">
+                        <span class="stat-number"><%= jobs.length * 50 %></span>
+                        <span class="stat-label">Active Jobs</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number"><%= jobs.length * 20 %></span>
+                        <span class="stat-label">Companies</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">50K+</span>
+                        <span class="stat-label">Professionals</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Jobs Section -->
+    <section class="jobs-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Latest Job Opportunities</h2>
+                <p>Find the perfect role that matches your skills and ambitions</p>
+            </div>
+            
+            <div class="jobs-grid">
+                <% if (jobs && jobs.length > 0) { %>
+                    <% jobs.forEach(job => { %>
+                        <div class="job-card">
+                            <div class="job-header">
+                                <div class="job-badge">
+                                    <span class="badge <%= job.type.toLowerCase().replace('-', '') %>"><%= job.type %></span>
+                                    <span class="badge experience"><%= job.experience %></span>
+                                </div>
+                                <button class="share-btn" onclick="shareJob(<%= job.id %>)">
+                                    <i class="fas fa-share-alt"></i>
+                                </button>
+                            </div>
+                            
+                            <h3 class="job-title"><%= job.title %></h3>
+                            <p class="job-company">
+                                <i class="fas fa-building"></i>
+                                <%= job.company %>
+                            </p>
+                            
+                            <div class="job-meta">
+                                <span class="meta-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <%= job.location %>
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <% 
+                                        // Format the date manually
+                                        const date = new Date(job.postedDate);
+                                        const now = new Date();
+                                        const diffTime = Math.abs(now - date);
+                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                        
+                                        if (diffDays === 1) { 
+                                    %>Today<%
+                                        } else if (diffDays <= 7) { 
+                                    %><%= diffDays %> days ago<%
+                                        } else { 
+                                    %><%= date.toLocaleDateString('en-IN', { 
+                                            day: 'numeric', 
+                                            month: 'short', 
+                                            year: 'numeric' 
+                                        }) %><%
+                                        } 
+                                    %>
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fas fa-rupee-sign"></i>
+                                    <%= job.salary %>
+                                </span>
+                            </div>
+                            
+                            <p class="job-description">
+                                <% 
+                                    const desc = job.shortDescription || '';
+                                    if (desc.length > 120) {
+                                %>
+                                    <%= desc.substring(0, 120) %>...
+                                <% } else { %>
+                                    <%= desc %>
+                                <% } %>
+                            </p>
+                            
+                            <div class="job-actions">
+                                <a href="/job/<%= job.id %>" class="btn btn-apply">View Details & Apply</a>
+                                <button class="save-btn" onclick="saveJob(<%= job.id %>)">
+                                    <i class="far fa-bookmark"></i>
+                                </button>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } else { %>
+                    <div class="no-jobs">
+                        <i class="fas fa-search fa-3x"></i>
+                        <h3>No jobs found</h3>
+                        <p>Try adjusting your search filters</p>
+                    </div>
+                <% } %>
+            </div>
+            
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <div class="pagination">
+                    <% if (hasPrevPage) { %>
+                        <a href="/search?page=<%= currentPage - 1 %>" class="page-link">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    <% } %>
+                    
+                    <div class="page-numbers">
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <% if (i === currentPage) { %>
+                                <span class="page-number active"><%= i %></span>
+                            <% } else { %>
+                                <a href="/search?page=<%= i %>" class="page-number"><%= i %></a>
+                            <% } %>
+                        <% } %>
+                    </div>
+                    
+                    <% if (hasNextPage) { %>
+                        <a href="/search?page=<%= currentPage + 1 %>" class="page-link">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
+        </div>
+    </section>
+
+<%- include('partials/footer') %>

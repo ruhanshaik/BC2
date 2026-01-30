@@ -1,0 +1,63 @@
+<%- include('partials/header') %>
+
+    <div class="admin-container">
+        <div class="admin-card">
+            <div class="admin-header">
+                <i class="fas fa-user-shield"></i>
+                <h1>Admin Login</h1>
+                <p>Access the Bangalore Connect admin panel</p>
+            </div>
+            
+            <% if (error) { %>
+                <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i> <%= error %>
+                </div>
+            <% } %>
+            
+            <form id="loginForm" action="/admin/login" method="POST">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" 
+                           placeholder="Enter admin username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" 
+                           placeholder="Enter admin password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="captcha">Enter CAPTCHA</label>
+                    <div class="captcha-container">
+                        <div class="captcha-box" id="captchaText"><%= captcha %></div>
+                        <button type="button" class="refresh-captcha" onclick="refreshCaptcha()">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </div>
+                    <input type="hidden" name="captchaHidden" value="<%= captcha %>">
+                    <input type="text" id="captcha" name="captcha" class="form-control" 
+                           placeholder="Type the CAPTCHA above" required style="margin-top: 1rem;">
+                </div>
+                
+                <button type="submit" class="btn btn-login">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function refreshCaptcha() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let captcha = '';
+            for (let i = 0; i < 6; i++) {
+                captcha += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            
+            document.getElementById('captchaText').textContent = captcha;
+            document.querySelector('input[name="captchaHidden"]').value = captcha;
+        }
+    </script>
+
+<%- include('partials/footer') %>

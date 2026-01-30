@@ -1,0 +1,382 @@
+<%- include('partials/header') %>
+
+    <div class="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <div>
+                    <h1>Post New Job</h1>
+                    <p>Fill in the job details below</p>
+                </div>
+                <div>
+                    <a href="/admin/dashboard" class="btn btn-outline">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+            
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="error-message" style="margin-bottom: 2rem;">
+                    <i class="fas fa-exclamation-circle"></i> <%= error %>
+                </div>
+            <% } %>
+            
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="success-message" style="background: var(--success); color: white; padding: 1rem; border-radius: var(--radius); margin-bottom: 2rem;">
+                    <i class="fas fa-check-circle"></i> <%= success %>
+                </div>
+            <% } %>
+            
+            <div class="job-detail-card">
+                <form action="/admin/post-job" method="POST" class="job-form">
+                    <div class="form-grid">
+                        <!-- Basic Information -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
+                            
+                            <div class="form-group">
+                                <label for="title">Job Title *</label>
+                                <input type="text" id="title" name="title" class="form-control" 
+                                       value="<%= job ? job.title : '' %>" required
+                                       placeholder="e.g., Full Stack Developer">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="company">Company Name *</label>
+                                <input type="text" id="company" name="company" class="form-control" 
+                                       value="<%= job ? job.company : '' %>" required
+                                       placeholder="e.g., Tech Solutions Inc">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="location">Location *</label>
+                                <input type="text" id="location" name="location" class="form-control" 
+                                       value="<%= job ? job.location : 'Bangalore' %>" required
+                                       placeholder="e.g., Bangalore">
+                            </div>
+                        </div>
+                        
+                        <!-- Job Details -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-briefcase"></i> Job Details</h3>
+                            
+                            <div class="form-group">
+                                <label for="type">Job Type</label>
+                                <select id="type" name="type" class="form-control">
+                                    <option value="Full-time">Full-time</option>
+                                    <option value="Part-time">Part-time</option>
+                                    <option value="Remote">Remote</option>
+                                    <option value="Hybrid">Hybrid</option>
+                                    <option value="Internship">Internship</option>
+                                    <option value="Contract">Contract</option>
+                                    <option value="Freelance">Freelance</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="experience">Experience Level</label>
+                                <input type="text" id="experience" name="experience" class="form-control" 
+                                       value="<%= job ? job.experience : '' %>"
+                                       placeholder="e.g., 0-2 years, Fresher, 5+ years">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="salary">Salary Package</label>
+                                <input type="text" id="salary" name="salary" class="form-control" 
+                                       value="<%= job ? job.salary : '' %>"
+                                       placeholder="e.g., ₹8-12 LPA, Not Disclosed, Competitive">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="applyLink">Apply Link (Email or URL)</label>
+                                <input type="text" id="applyLink" name="applyLink" class="form-control" 
+                                       value="<%= job ? job.applyLink : '' %>"
+                                       placeholder="e.g., mailto:careers@company.com or https://company.com/careers">
+                                <small>Leave empty for auto-generated email</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Descriptions -->
+                    <div class="form-section">
+                        <h3><i class="fas fa-file-alt"></i> Job Description</h3>
+                        
+                        <div class="form-group">
+                            <label for="shortDescription">Short Description *</label>
+                            <small>
+                                This will appear on the homepage job cards.
+                                <strong>IMPORTANT:</strong> Enter EXACTLY what you want to show on the homepage.
+                                Can include icons (📱💻💰), emojis (🚀⭐🎯), line breaks, etc.
+                            </small>
+                            <textarea id="shortDescription" name="shortDescription" class="form-control" 
+                                      rows="6" required
+                                      placeholder="Enter the EXACT description you want to show on homepage job cards. Include icons, emojis, line breaks as needed.
+
+Example:
+📱 Technology & Telecom Industry
+💻 Good Computer Skills Required
+⭐ Excellent communication skills
+🎯 First class academics throughout
+💰 Competitive salary package
+🏢 Bangalore location"><%= job ? job.shortDescription : '' %></textarea>
+                            <div class="char-count" id="shortDescCount">Characters: 0</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fullDescription">Full Description *</label>
+                            <small>
+                                This will appear on the job details page when users click "Apply Now".
+                                <strong>IMPORTANT:</strong> Enter EXACTLY what you want to show to applicants.
+                                Can include HTML, icons, emojis, formatting, etc.
+                            </small>
+                            <textarea id="fullDescription" name="fullDescription" class="form-control" 
+                                      rows="25" required
+                                      placeholder="Paste the COMPLETE job description here exactly as you want it to appear to applicants.
+
+Example format:
+🏢 <strong>BangaloreConnect</strong>
+
+📱 <strong>Technology companies.</strong> Over 900 communications providers. And how we're able to provide our incredible talent with an innovative culture and great benefits.
+
+⭐ <strong>Who We're Looking For</strong>
+Synthesize is looking for enthusiastic graduates to join our organization under the Graduate Apprentice Program. This program will help to have an excellent point of departure towards career growth.
+
+🎯 <strong>Some Of What You'll Do</strong>
+• During the 12-month period, you will work in different functional areas
+• You will work on right combination of assignments
+• Assist within the relevant department
+• Prepare presentations and complete evaluations
+• Attend all training and information sessions
+
+✅ <strong>Requirements:</strong>
+• Full Time Graduates, with record of First class
+• Computer Science, Business Administration, Marketing, Cyber Security
+• No backlogs, first attempt only
+• Graduates cannot exceed 3 years of completing college
+
+💰 <strong>Additional Requirements</strong>
+• Interest working in Technology/Telecommunications
+• Good Computer Skills including Microsoft Office
+• Excellent organizing and communication skills"><%= job ? job.fullDescription : '' %></textarea>
+                            
+                            <!-- Preview section -->
+                            <div class="preview-section" style="margin-top: 1.5rem; padding: 1.5rem; background: #f9f9f9; border-radius: 8px; border: 1px solid #ddd;">
+                                <h4 style="margin-bottom: 1rem; color: var(--primary);">
+                                    <i class="fas fa-eye"></i> Preview - How it will appear to users:
+                                </h4>
+                                
+                                <div style="margin-bottom: 1rem; padding: 0.5rem; background: #e6f3ff; border-radius: 4px;">
+                                    <strong><i class="fas fa-home"></i> Homepage Job Card Preview:</strong>
+                                    <div id="homepagePreview" style="margin-top: 0.5rem; padding: 1rem; background: white; border-radius: 6px; min-height: 80px; max-height: 200px; overflow-y: auto; white-space: pre-wrap;">
+                                        <p style="color: #666; font-style: italic;">Short description will appear here...</p>
+                                    </div>
+                                </div>
+                                
+                                <div style="padding: 0.5rem; background: #e6f3ff; border-radius: 4px;">
+                                    <strong><i class="fas fa-file-alt"></i> Job Details Page Preview:</strong>
+                                    <div id="detailsPreview" style="margin-top: 0.5rem; padding: 1rem; background: white; border-radius: 6px; min-height: 150px; max-height: 400px; overflow-y: auto; white-space: pre-wrap;">
+                                        <p style="color: #666; font-style: italic;">Full description will appear here...</p>
+                                    </div>
+                                </div>
+                                
+                                <small style="color: #666; display: block; margin-top: 0.5rem;">
+                                    <i class="fas fa-info-circle"></i> Both descriptions will show EXACTLY as entered above, preserving all formatting
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="reset" class="btn btn-outline">
+                            <i class="fas fa-redo"></i> Reset Form
+                        </button>
+                        <button type="submit" class="btn btn-apply">
+                            <i class="fas fa-paper-plane"></i> Post Job
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Character counter for short description
+        const shortDescTextarea = document.getElementById('shortDescription');
+        const charCount = document.getElementById('shortDescCount');
+        const homepagePreview = document.getElementById('homepagePreview');
+        
+        if (shortDescTextarea && charCount && homepagePreview) {
+            function updateHomepagePreview() {
+                const text = shortDescTextarea.value;
+                charCount.textContent = `Characters: ${text.length}`;
+                
+                if (!text.trim()) {
+                    homepagePreview.innerHTML = '<p style="color: #666; font-style: italic;">Short description will appear here...</p>';
+                } else {
+                    // Preserve all formatting including line breaks, emojis, etc.
+                    homepagePreview.innerHTML = text.replace(/\n/g, '<br>');
+                }
+            }
+            
+            shortDescTextarea.addEventListener('input', updateHomepagePreview);
+            updateHomepagePreview();
+        }
+        
+        // Real-time preview for full description
+        const fullDescTextarea = document.getElementById('fullDescription');
+        const detailsPreview = document.getElementById('detailsPreview');
+        
+        if (fullDescTextarea && detailsPreview) {
+            function updateDetailsPreview() {
+                const text = fullDescTextarea.value;
+                
+                if (!text.trim()) {
+                    detailsPreview.innerHTML = '<p style="color: #666; font-style: italic;">Full description will appear here...</p>';
+                } else {
+                    // Preserve ALL formatting including line breaks, HTML, emojis, etc.
+                    // Convert newlines to <br> for proper display
+                    detailsPreview.innerHTML = text
+                        .replace(/\n/g, '<br>')
+                        .replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+                }
+            }
+            
+            fullDescTextarea.addEventListener('input', updateDetailsPreview);
+            updateDetailsPreview();
+        }
+        
+        // Sample data button for quick testing
+        const sampleDataBtn = document.createElement('button');
+        sampleDataBtn.type = 'button';
+        sampleDataBtn.innerHTML = '<i class="fas fa-magic"></i> Load Sample Job Description';
+        sampleDataBtn.style.marginTop = '1rem';
+        sampleDataBtn.style.padding = '0.75rem 1.5rem';
+        sampleDataBtn.style.background = 'linear-gradient(135deg, var(--primary), #667eea)';
+        sampleDataBtn.style.color = 'white';
+        sampleDataBtn.style.border = 'none';
+        sampleDataBtn.style.borderRadius = '6px';
+        sampleDataBtn.style.cursor = 'pointer';
+        sampleDataBtn.style.fontWeight = '600';
+        sampleDataBtn.style.fontSize = '0.95rem';
+        sampleDataBtn.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        
+        sampleDataBtn.addEventListener('click', function() {
+            // Set sample short description (for homepage)
+            const sampleShortDesc = `📱 Technology & Telecommunications Industry
+💻 Good Computer Skills Required (Microsoft Office)
+⭐ Excellent communication & organizing skills
+🎯 First class academics throughout (No backlogs)
+💰 Competitive salary package
+🏢 Bangalore location
+🚀 Immediate joiners preferred
+✅ 0-3 years experience`;
+
+            // Set sample full description (for job details page)
+            const sampleFullDesc = `🏢 <strong>BangaloreConnect</strong>
+
+📱 <strong>Technology companies.</strong> Over 900 communications providers. And how we're able to provide our incredible talent with an innovative culture and great benefits. <br><br>
+
+⭐ <strong>Who We're Looking For</strong><br>
+Synthesize is looking for enthusiastic graduates to join our organization under the Graduate Apprentice Program. This program will help to have an excellent point of departure towards career growth. This competitive apprenticeship program is a robust experience that offers you exposure to the business world through a meaningful work experience. We inspire you to perform at your pinnacle and educate you on everything you need to know about Syniverse. <br><br>
+
+🎯 <strong>Some Of What You'll Do</strong><br>
+• During the 12-month period, you will work in different functional areas and be actively involved in day-to-day business and projects simultaneously benefitting from professional and individual coaching.<br>
+• You will work on right combination of assignments that will develop your competencies, skills, and interests.<br>
+• Assist within the relevant department, but also learn about other aspects of the company.<br>
+• Prepare presentations and complete evaluations and assessments as assigned.<br>
+• Attend all training and information sessions in order to gain the knowledge and skills needed to succeed.<br>
+• Accept, respond to and implement any feedback offered.<br><br>
+
+✅ <strong>Experience, Education, And Certifications</strong><br>
+• Full Time Graduates, with record of First class through out their academics including graduation in the following areas: Computer Science, Business Administration, Marketing, Cyber Security, Information Technology, Accounting, or related business/STEM field.<br>
+• Candidates should have passed each semester / each year of engineering in first attempt only with no backlogs<br>
+• Candidates who have appeared for the final engineering examinations in the year of selection only, are eligible for selection as Graduate Apprenticeship<br>
+• Graduates cannot exceed 3 years of completing their college education to be eligible.<br><br>
+
+💰 <strong>Additional Requirements</strong><br>
+• Interest working in the Technology/Telecommunications Industry<br>
+• Good Computer Skills including Microsoft Office.<br>
+• Excellent organizing and communication skills.<br><br>
+
+📅 <strong>Job Details:</strong><br>
+📍 Location: Bangalore<br>
+🎓 Experience: Fresher / 0-3 years<br>
+💼 Job Type: Full-time<br>
+💰 Salary: Competitive (Based on experience)<br>
+⏰ Notice Period: Immediate joiners preferred`;
+
+            // Fill the form fields
+            document.getElementById('title').value = 'Graduate Apprentice - Technology';
+            document.getElementById('company').value = 'Syniverse (via BangaloreConnect)';
+            document.getElementById('location').value = 'Bangalore';
+            document.getElementById('type').value = 'Full-time';
+            document.getElementById('experience').value = 'Fresher / 0-3 years';
+            document.getElementById('salary').value = 'Competitive Salary Package';
+            document.getElementById('applyLink').value = 'mailto:careers@syniverse.com';
+            document.getElementById('shortDescription').value = sampleShortDesc;
+            document.getElementById('fullDescription').value = sampleFullDesc;
+            
+            // Update previews
+            updateHomepagePreview();
+            updateDetailsPreview();
+            
+            // Show success message
+            sampleDataBtn.innerHTML = '<i class="fas fa-check"></i> Sample Data Loaded!';
+            sampleDataBtn.style.background = 'linear-gradient(135deg, var(--success), #10b981)';
+            
+            setTimeout(() => {
+                sampleDataBtn.innerHTML = '<i class="fas fa-magic"></i> Load Sample Job Description';
+                sampleDataBtn.style.background = 'linear-gradient(135deg, var(--primary), #667eea)';
+            }, 2000);
+        });
+        
+        // Insert sample button after the full description textarea
+        if (fullDescTextarea) {
+            fullDescTextarea.parentNode.insertBefore(sampleDataBtn, fullDescTextarea.nextSibling);
+        }
+        
+        // Form validation
+        const jobForm = document.querySelector('.job-form');
+        if (jobForm) {
+            jobForm.addEventListener('submit', function(e) {
+                const title = document.getElementById('title').value;
+                const company = document.getElementById('company').value;
+                const location = document.getElementById('location').value;
+                const shortDesc = document.getElementById('shortDescription').value;
+                const fullDesc = document.getElementById('fullDescription').value;
+                
+                if (!title.trim() || !company.trim() || !location.trim() || !shortDesc.trim() || !fullDesc.trim()) {
+                    e.preventDefault();
+                    alert('Please fill all required fields (marked with *).');
+                    return false;
+                }
+                
+                // Show confirmation with preview
+                e.preventDefault();
+                const confirmPost = confirm(`Ready to post job?\n\nTitle: ${title}\nCompany: ${company}\nLocation: ${location}\n\nThe description will appear EXACTLY as you entered it, with all formatting preserved.`);
+                
+                if (confirmPost) {
+                    this.submit();
+                }
+                
+                return false;
+            });
+        }
+        
+        // Add paste handler to preserve formatting
+        [shortDescTextarea, fullDescTextarea].forEach(textarea => {
+            if (textarea) {
+                textarea.addEventListener('paste', function(e) {
+                    // Allow paste to happen naturally
+                    setTimeout(() => {
+                        if (textarea === shortDescTextarea) {
+                            updateHomepagePreview();
+                        } else {
+                            updateDetailsPreview();
+                        }
+                    }, 10);
+                });
+            }
+        });
+    </script>
+
+<%- include('partials/footer') %>
